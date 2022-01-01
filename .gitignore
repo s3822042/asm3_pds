@@ -1,0 +1,6 @@
+movie-rating-prediction/.env
+movie-rating-prediction/__pycache__/
+movie-rating-prediction/api/__pycache__/
+movie-rating-prediction/api/dash/__pycache__/
+movie-rating-prediction/api/static/.webassets-cache/
+movie-rating-prediction/api/static/dist/
