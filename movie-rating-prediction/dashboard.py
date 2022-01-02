@@ -1,4 +1,5 @@
 from dash import Dash, html, dcc
+from flask import Flask
 from dash.dependencies import Input, Output, State, ClientsideFunction
 import pathlib
 import datetime as dt
@@ -17,11 +18,24 @@ PATH = pathlib.Path(__file__).parent
 DATA_PATH = PATH.joinpath("data").resolve()
 MODEL_PATH = PATH.joinpath("model").resolve()
 
+
+
+server = Flask(__name__)
+
 app = Dash(
-    __name__, meta_tags=[{"name": "viewport", "content": "width=device-width"}],
+    __name__, server=server, meta_tags=[{"name": "viewport", "content": "width=device-width"}],
 )
+
+# Routing
+@server.route("/evaluate")
+def Evaluate():
+    return "Evaluate"
+
+@server.route("/predict")
+def Predict():
+    return "Predict"
+
 app.title = "Visualization Dashboard"
-server = app.server
 
 movie_status_options = [
     {"label": str(MOVIES_STATUSES[movie_status]), "value": str(movie_status)}
@@ -32,7 +46,6 @@ movie_status_options = [
 # model1 = pickle.load(open(MODEL_PATH.joinpath("model1.pkl"), "rb"))
 # model2 = pickle.load(open(MODEL_PATH.joinpath("model2.pkl"), "rb"))
 # model3 = pickle.load(open(MODEL_PATH.joinpath("model3.pkl"), "rb"))
-
 
 df = pd.read_csv(
     DATA_PATH.joinpath("data.csv"),
@@ -261,6 +274,9 @@ def make_count_figure(movies_statuses,year_slider):
     figure = dict(data=data, layout=layout_count)
     return figure
 
+@server.route("/")
+def my_dash_app():
+    return app.index()
 
 # Main
 if __name__ == "__main__":
