@@ -10,6 +10,7 @@ Please do this first before all of the below
 - Install all required packages inside requirements.txt using pip install -r requirements.txt in root directory
 
 For starting web app:
+ - Go inside folder "movie-rating-prediction'
  - Run python dashboard.py
 
  Task 3 API:
