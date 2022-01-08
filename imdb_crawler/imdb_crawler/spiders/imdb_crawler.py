@@ -27,6 +27,7 @@ class CrawlerSpider(scrapy.Spider):
         try:
             # get rating score from website using xpath selector
             rating = response.xpath('//span[@class="AggregateRatingButton__RatingScore-sc-1ll29m0-1 iTLWoV"]/text()').extract_first()
+            # round rating score
             item['rating'] = str(round(float(rating)))
         except:
             item['rating'] = ''
