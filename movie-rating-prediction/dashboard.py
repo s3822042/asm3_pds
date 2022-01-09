@@ -1,18 +1,16 @@
 from dash import Dash, html, dcc
-from flask import Flask
+from flask import Flask, flash, request, redirect, jsonify, render_template
 from dash.dependencies import Input, Output
 import pathlib
-import datetime as dt
-import plotly.express as px
-
-
 import numpy as np
 import pandas as pd
 import pickle
-import copy
-
-
-from controls import MOVIES_STATUSES
+import traceback
+import plotly.express as px
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import r2_score
+from sklearn.metrics import accuracy_score
 
 
 PATH = pathlib.Path(__file__).parent
@@ -25,20 +23,101 @@ app = Dash(
     __name__, server=server, meta_tags=[{"name": "viewport", "content": "width=device-width"}],
 )
 
-
-
 # Routing
-@server.route("/evaluate")
-def Evaluate():
-    return "Evaluate"
+@server.route("/evaluate", methods=['POST','GET'])
+def evaluate():
+    if request.method == 'GET':
+       return "Evaluation page"
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            flash('No file part')
+            return redirect(request.url)
+        try:
+            file = request.files['file']
+            if file.filename == '':
+                flash('No selected file')
+                return redirect(request.url)
+            df_test_file =  pd.read_csv(file, delimiter=',')
+            X_test = df_test_file.drop(columns='rating').copy()
+            y_test = df_test_file['rating'].copy()
+            y_predict_dt = dt_model.predict(X_test)
+            y_predict_lgbm = lgbm_model.predict(X_test)
+            # Decision Tree Algorithm
+            dt_rmse = np.sqrt(mean_squared_error(y_test, y_predict_dt))
+            dt_mae = mean_absolute_error(y_test, y_predict_dt)
+            dt_r2 = r2_score(y_test, y_predict_dt)
+            dt_accuracy = accuracy_score(y_test, y_predict_dt)
+            # Light GBM Algorithm
+            lgbm_rmse = np.sqrt(mean_squared_error(y_test, y_predict_lgbm))
+            lgbm_mae = mean_absolute_error(y_test, y_predict_lgbm)
+            lgbm_r2 = r2_score(y_test, y_predict_lgbm)
+            lgbm_accuracy = accuracy_score(y_test, y_predict_lgbm)
 
-@server.route("/predict", methods=['POST'])
-def Predict():
-    return "Predict"
+            metric_dt = [
+                {
+                    "RMSE": dt_rmse,
+                    "MAE:": dt_mae,
+                    "R2:": dt_r2,
+                    "Accuracy:": dt_accuracy,
+                }
+            ]
+
+            metric_lgbm = [
+                {
+                    "RMSE": lgbm_rmse,
+                    "MAE:": lgbm_mae,
+                    "R2:": lgbm_r2,
+                    "Accuracy:": lgbm_accuracy,
+                }
+            ]
+
+            return jsonify({
+               "Evaluation Metric for Decision Tree Algorithm":metric_dt,
+               "Evaluation Metric for Light GBM Algorithm":metric_lgbm,
+            })
+
+        except:
+           return jsonify({
+               "trace": traceback.format_exc()
+               })
+
+
+
+@server.route("/predict", methods=['POST','GET'])
+def predict():
+    if request.method == 'GET':
+       return "Prediction page"
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            flash('No file part')
+            return redirect(request.url)
+        try:
+            file = request.files['file']
+            if file.filename == '':
+                flash('No selected file')
+                return redirect(request.url)
+            df_test_file =  pd.read_csv(file, delimiter=',')
+            X_test = df_test_file.drop(columns='rating').copy()
+            prediction_dt = list(dt_model.predict(X_test))
+            prediction_lgbm = lgbm_model.predict(X_test)
+        #   prediction_xgbr = xgbr_model.predict(X_test)
+
+             # Take the first value of prediction
+            output_dt = prediction_dt[0]
+            output_lgbm = prediction_lgbm[0]
+
+            return jsonify({
+               "Prediction for rating using Decision Tree Algorithm":str(output_dt),
+               "Prediction for rating using Light GBM Algorithm":str(output_lgbm)
+            })
+
+        except:
+           return jsonify({
+               "trace": traceback.format_exc()
+               })
+
 
 app.title = "Visualization Dashboard"
-
-
 
 df = pd.read_csv(
     DATA_PATH.joinpath("data.csv"),
@@ -87,5 +166,8 @@ if __name__ == "__main__":
     lgbm_model = pickle.load(open(MODEL_PATH.joinpath("lgbm.pkl"), "rb"))
     print('lgbm model loaded')
     # xgbr_model = pickle.load(open(MODEL_PATH.joinpath("xgbr.pkl"), "rb"))
+    # print('xgbr model loaded')
+    server.secret_key = 'super secret key'
+    server.config['SESSION_TYPE'] = 'filesystem'
 
     app.run_server(debug=True)
