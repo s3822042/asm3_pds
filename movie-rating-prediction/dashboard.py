@@ -42,42 +42,12 @@ def evaluate():
             df_test_file =  pd.read_csv(file, delimiter=',')
             X_test = df_test_file.drop(columns='rating').copy()
             y_test = df_test_file['rating'].copy()
-            y_predict_dt = dt_model.predict(X_test)
-            y_predict_lgbm = lgbm_model.predict(X_test)
             y_predict_xgbr = xgbr_model.predict(X_test)
-            # Decision Tree Algorithm
-            dt_rmse = np.sqrt(mean_squared_error(y_test, y_predict_dt))
-            dt_mae = mean_absolute_error(y_test, y_predict_dt)
-            dt_r2 = r2_score(y_test, y_predict_dt)
-            dt_accuracy = accuracy_score(y_test, y_predict_dt)
-            # Light GBM Algorithm
-            lgbm_rmse = np.sqrt(mean_squared_error(y_test, y_predict_lgbm))
-            lgbm_mae = mean_absolute_error(y_test, y_predict_lgbm)
-            lgbm_r2 = r2_score(y_test, y_predict_lgbm)
-            lgbm_accuracy = accuracy_score(y_test, y_predict_lgbm)
             # XG Boost  Algorithm
             xgbr_rmse = np.sqrt(mean_squared_error(y_test, y_predict_xgbr))
             xgbr_mae = mean_absolute_error(y_test, y_predict_xgbr)
             xgbr_r2 = r2_score(y_test, y_predict_xgbr)
             xgbr_accuracy = accuracy_score(y_test, y_predict_xgbr)
-
-            metric_dt = [
-                {
-                    "RMSE": dt_rmse,
-                    "MAE:": dt_mae,
-                    "R2:": dt_r2,
-                    "Accuracy:": dt_accuracy,
-                }
-            ]
-
-            metric_lgbm = [
-                {
-                    "RMSE": lgbm_rmse,
-                    "MAE:": lgbm_mae,
-                    "R2:": lgbm_r2,
-                    "Accuracy:": lgbm_accuracy,
-                }
-            ]
 
             metric_xgbr = [
                 {
@@ -89,8 +59,6 @@ def evaluate():
             ]
 
             return jsonify({
-               "Evaluation Metric for Decision Tree Algorithm":metric_dt,
-               "Evaluation Metric for Light GBM Algorithm":metric_lgbm,
                "Evaluation Metric for XG Boost Algorithm":metric_xgbr,
             })
 
@@ -115,18 +83,12 @@ def predict():
                 return redirect(request.url)
             df_test_file =  pd.read_csv(file, delimiter=',')
             X_test = df_test_file.drop(columns='rating').copy()
-            prediction_dt = list(dt_model.predict(X_test))
-            prediction_lgbm = lgbm_model.predict(X_test)
             prediction_xgbr = xgbr_model.predict(X_test)
 
              # Take the first value of prediction
-            output_dt = prediction_dt[0]
-            output_lgbm = prediction_lgbm[0]
             output_xgbr = prediction_xgbr[0]
 
             return jsonify({
-               "Prediction for rating using Decision Tree Algorithm":str(output_dt),
-               "Prediction for rating using Light GBM Algorithm":str(output_lgbm),
                "Prediction for rating using XG Boost Algorithm":str(output_xgbr)
             })
 
@@ -172,10 +134,6 @@ df['year'] = df['release_date'].dt.year
 # Main
 if __name__ == "__main__":
     # Load model
-    dt_model = pickle.load(open(MODEL_PATH.joinpath("dt.pkl"), "rb"))
-    print('dt model loaded')
-    lgbm_model = pickle.load(open(MODEL_PATH.joinpath("lgbm.pkl"), "rb"))
-    print('lgbm model loaded')
     xgbr_model = pickle.load(open(MODEL_PATH.joinpath("xgbr.pkl"), "rb"))
     print('xgbr model loaded')
 
