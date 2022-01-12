@@ -45,35 +45,13 @@ body {
   width: calc(100%-40px);
 }
 
-.rc-slider {
-  margin-left: 0px;
-  padding-left: 0px;
-}
-
 .flex-display {
   display: flex;
 }
 
 .container-display {
   display: flex;
-}
-
-#individual_graph,
-#aggregate_graph {
-  width: calc(100% - 30px);
-  position: absolute;
-}
-
-#count_graph {
-  position: absolute;
-  height: calc(100% - 30px);
-  width: calc(100% - 30px);
-}
-
-#countGraphContainer {
-  flex: 5;
-  position: relative;
-}
+}w
 
 #header {
   align-items: center;
@@ -95,39 +73,4 @@ body {
 #right-column {
   display: flex;
   flex-direction: column;
-}
-
-#wells {
-  flex: 1;
-}
-
-#gas {
-  flex: 1;
-}
-
-#aggregate_data {
-  align-items: center;
-}
-
-#oil {
-  flex: 1;
-}
-
-#water {
-  flex: 1;
-}
-
-#tripleContainer {
-  display: flex;
-  flex: 3;
-}
-
-#mainContainer {
-  display: flex;
-  flex-direction: column;
-}
-
-#pie_graph > div > div > svg:nth-child(3) > g.infolayer > g.legend {
-  pointer-events: all;
-  transform: translate(30px, 349px);
 }
