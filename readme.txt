@@ -11,7 +11,7 @@ Please do this first before all of the below
 
 For starting the visualization dashboard:
  - Go inside folder "movie-rating-prediction'
- - Run python dashboard.py
+ - Run python app.py
  - Wait until  this line "Running on http://127.0.0.1:5000/" appear
  - Navigate to this URL to see the visualization dashboard
 

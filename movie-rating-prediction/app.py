@@ -1,13 +1,25 @@
-from get_data import all_movies, genres
+from get_data import all_movies, ml_data
 from dash import Dash, html, dcc
+from dash.dependencies import Input, Output
 from flask import Flask, flash, request, redirect, jsonify
 import pathlib
 import numpy as np
 import pandas as pd
 import pickle
 import traceback
+
+# Chart
+
 import plotly.express as px
 import plotly.graph_objs as go
+# ML Algorithm
+
+from sklearn.model_selection import train_test_split
+from sklearn import tree
+import lightgbm as lgb
+import xgboost as xgb
+# Evaluation metric
+
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import r2_score
@@ -27,6 +39,19 @@ app = Dash(
 )
 
 df = all_movies.copy()
+ml = ml_data.copy()
+
+X = ml.budget.values[:, None]
+y = ml['rating']
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, random_state=42)
+
+MODELS = {
+    'Decision Tree': tree.DecisionTreeClassifier,
+    'Light GBM': lgb.LGBMClassifier,
+    'XG Boost': xgb.XGBClassifier
+}
 
 # Routing
 @server.route("/evaluate", methods=['POST','GET'])
@@ -119,7 +144,7 @@ sorted_data = df2.reindex(new_index)
 # Create app layout
 app.layout = html.Div(
     [
-        # empty Div to trigger javascript file for graph resizing
+        # empty Div to trigger javascript file for ml_graph resizing
         html.Div(
             [
                 html.Div(
@@ -151,9 +176,37 @@ app.layout = html.Div(
         ),
         html.Div(
             [
+                html.P("Select Model:"),
+                dcc.Dropdown(
+                    id='model-name',
+                    options=[{'label': x, 'value': x}
+                             for x in MODELS],
+                    value='Decision Tree',
+                    clearable=False
+                ),
+            ],
+            className="four columns",
+            style={
+                "margin-top": "10px",
+            },
+            id="cross-filter-options",
+        ),
+        html.Div(
+            [
+                html.Div(
+                    [dcc.Graph(id="ml_graph")],
+                    id="GraphContainer",
+                    className="pretty_container",
+                ),
+            ],
+            id="right-column",
+            className="twelve columns",
+        ),
+        html.Div(
+            [
                 html.Div(
                     [dcc.Graph(
-                        figure = px.bar(df1, x="popularity", y="title")
+                        figure=px.bar(df1, x="popularity", y="title")
                     )],
                     className="pretty_container six columns",
                 ),
@@ -166,19 +219,33 @@ app.layout = html.Div(
             ],
             className="row flex-display",
         ),
-        html.Div(
-            html.Div(
-                [dcc.Graph(
-
-                )],
-                className="pretty_container twelve columns",
-            ),
-            className="row flex-display",
-        )
     ],
     id="mainContainer",
     style={"display": "flex", "flex-direction": "column"},
 )
+
+
+@app.callback(
+    Output("ml_graph", "figure"),
+    [Input('model-name', "value")])
+def train_and_display(name):
+    model = MODELS[name]()
+    model.fit(X_train, y_train)
+
+    x_range = np.linspace(X.min(), X.max(), 100)
+    y_range = model.predict(x_range.reshape(-1, 1))
+
+    fig = go.Figure([
+        go.Scatter(x=X_train.squeeze(), y=y_train,
+                   name='train', mode='markers'),
+        go.Scatter(x=X_test.squeeze(), y=y_test,
+                   name='test', mode='markers'),
+        go.Scatter(x=x_range, y=y_range,
+                   name='prediction')
+    ])
+
+    return fig
+
 
 # Main
 if __name__ == "__main__":
