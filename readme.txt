@@ -16,6 +16,9 @@ For starting the visualization dashboard:
  - Navigate to this URL to see the visualization dashboard
 
 Task 3 API:
+
+Postman Documentation: https://documenter.getpostman.com/view/14134712/UVXesJ2v
+
 Please use Postman in order to do below step:
  - Create new POST request to http://127.0.0.1:5000/evaluate or http://127.0.0.1:5000/predict
   - Body:

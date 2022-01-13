@@ -35,7 +35,8 @@ server.secret_key = 'super secret key'
 server.config['SESSION_TYPE'] = 'filesystem'
 
 app = Dash(
-    __name__, server=server, meta_tags=[{"name": "viewport", "content": "width=device-width"}],
+    __name__, server=server, meta_tags=[
+        {"name": "viewport", "content": "width=device-width"}],
 )
 
 df = all_movies.copy()
@@ -54,10 +55,12 @@ MODELS = {
 }
 
 # Routing
-@server.route("/evaluate", methods=['POST','GET'])
+
+
+@server.route("/evaluate", methods=['POST', 'GET'])
 def evaluate():
     if request.method == 'GET':
-       return "Please use Postman to input the test file and get the evaluation metric"
+        return "Please use Postman to input the test file and get the evaluation metric"
     if request.method == 'POST':
         if 'file' not in request.files:
             flash('No file part')
@@ -67,7 +70,7 @@ def evaluate():
             if file.filename == '':
                 flash('No selected file')
                 return redirect(request.url)
-            df_test_file =  pd.read_csv(file, delimiter=',')
+            df_test_file = pd.read_csv(file, delimiter=',')
             X_test = df_test_file.drop(columns='rating').copy()
             y_test = df_test_file['rating'].copy()
             y_predict_xgbr = xgbr_model.predict(X_test)
@@ -87,19 +90,19 @@ def evaluate():
             ]
 
             return jsonify({
-               "Evaluation Metric for XG Boost Algorithm":metric_xgbr,
+                "Evaluation Metric for XG Boost Algorithm": metric_xgbr,
             })
 
         except:
-           return jsonify({
-               "trace": traceback.format_exc()
-               })
+            return jsonify({
+                "trace": traceback.format_exc()
+            })
 
 
-@server.route("/predict", methods=['POST','GET'])
+@server.route("/predict", methods=['POST', 'GET'])
 def predict():
     if request.method == 'GET':
-       return "Please use Postman to input test set file and get the predicted rating value"
+        return "Please use Postman to input test set file and get the predicted rating value"
     if request.method == 'POST':
         if 'file' not in request.files:
             flash('No file part')
@@ -109,27 +112,50 @@ def predict():
             if file.filename == '':
                 flash('No selected file')
                 return redirect(request.url)
-            df_test_file =  pd.read_csv(file, delimiter=',')
+            df_test_file = pd.read_csv(file, delimiter=',')
             X_test = df_test_file.drop(columns='rating').copy()
             prediction_xgbr = xgbr_model.predict(X_test)
 
-             # Take the first value of prediction
+            # Take the first value of prediction
             output_xgbr = prediction_xgbr[0]
 
             return jsonify({
-               "Prediction for rating using XG Boost Algorithm":str(output_xgbr)
+                "Prediction for rating using XG Boost Algorithm": str(output_xgbr)
             })
 
         except:
-           return jsonify({
-               "trace": traceback.format_exc()
-               })
+            return jsonify({
+                "trace": traceback.format_exc()
+            })
 
 
 app.title = "Visualization Dashboard"
-
+# Chart 1
 df1 = df.sort_values(by='popularity', ascending=False).head(5)
+fig1 = px.bar(df1, x="popularity", y="title",
+              labels={
+                  "popularity": "Popularity score",
+                  "title": "Movie title",
+              },
+              )
 
+fig1.update_layout(
+    title={
+        'text': "Most popular movies based on popularity score",
+        'y': 0.9,
+        'x': 0.5,
+        'xanchor': 'center',
+        'yanchor': 'bottom'
+    },
+    font=dict(
+        size=18,
+    ),
+)
+
+
+fig1.update_yaxes(automargin=True)
+
+#  Chart 2
 unique = list(df.original_language.unique())
 list_ratio = []
 for each in unique:
@@ -140,6 +166,28 @@ for each in unique:
 df2 = pd.DataFrame({"language": unique, "ratio": list_ratio})
 new_index = (df2.ratio.sort_values(ascending=False).head(5)).index.values
 sorted_data = df2.reindex(new_index)
+
+fig2 = px.bar(sorted_data, x="language", y="ratio",
+              labels={
+                  "language": "Language",
+                  "ratio": "Ratio",
+              },
+              )
+
+fig2.update_layout(
+    title={
+        'text': "Most common languages used in movies",
+        'y': 0.9,
+        'x': 0.5,
+        'xanchor': 'center',
+        'yanchor': 'bottom'
+    },
+    font=dict(
+        size=18,
+    ),
+)
+
+fig2.update_yaxes(automargin=True)
 
 # Create app layout
 app.layout = html.Div(
@@ -159,8 +207,8 @@ app.layout = html.Div(
                                 ),
                                 html.H5(
                                     "Movie Rating Prediction",
-                                     style={
-                                         "margin-top": "0px"
+                                    style={
+                                        "margin-top": "0px"
                                     },
                                 ),
                             ]
@@ -206,13 +254,13 @@ app.layout = html.Div(
             [
                 html.Div(
                     [dcc.Graph(
-                        figure=px.bar(df1, x="popularity", y="title")
+                        figure=fig1
                     )],
                     className="pretty_container six columns",
                 ),
                 html.Div(
                     [dcc.Graph(
-                        figure=px.bar(sorted_data, x="language", y="ratio")
+                        figure=fig2
                     )],
                     className="pretty_container six columns",
                 ),
@@ -243,6 +291,21 @@ def train_and_display(name):
         go.Scatter(x=x_range, y=y_range,
                    name='prediction')
     ])
+
+    fig.update_layout(
+        title={
+            'text': "Scatter plot for different model",
+            'y': 0.9,
+            'x': 0.5,
+            'xanchor': 'center',
+            'yanchor': 'top'
+        },
+        xaxis_title="Budget of the movie",
+        yaxis_title="Rating",
+        font=dict(
+            size=18,
+        )
+    )
 
     return fig
 
